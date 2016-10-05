@@ -20,9 +20,6 @@ def http_get(connection, path):
     else:
         raise Exception("HTTP call failed: " + response.reason)
 
-#def process_xml(xmldata):
-
-
 url = 'wsearch.nlm.nih.gov'
 search = input('What would you like to search for? ')
 results = input('How many results would you like to display? ')
