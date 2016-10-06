@@ -14,6 +14,9 @@ Hierarchical URL is used to specify desired resource
 the base URL will return the entire stock
 /<category>/<product> will return the quantity of the product
 /<category> will return all products with quantities inside the specified category
+Parameters:
+max=<int> - only returns items with stocks below the specified value, can be run with min parameter as well
+min=<int> - only returns items with stocks above the specified value, can be run with max parameter as well
 Errors:
 "database is empty" - there is no file 'database' on the server, or the file is empty
 "category not found" - the specified category does not exist in the database file
@@ -21,7 +24,7 @@ Errors:
 
 
 Restocking/Selling items (increment and decrement):
-Use HTTP POST
+Use HTTP PUT
 a category and item must be specified in the hierarchical path e.g. /animals/giraffe
 parameters:
 option=<increment OR decrement> (required)
@@ -30,15 +33,15 @@ Errors:
 "item does not exist" - the chosen item does not exist or you only specified a category, no item
 "negative quantity error" - occurs when a decrement operation would leave a stock below zero, does not change the stock of this product
 "invalid option, choose increment or decrement" - the option parameter must be set to either 'increment' or 'decrement'
-"plese include the option parameter in your query string and a path to an item, not a category" - the option parameter was excluded in your URL, this parameter is required for a POST or the path was too short
+"please include the option parameter in your query string and a path to an item, not a category" - the option parameter was excluded in your URL, this parameter is required for a POST or the path was too short
 
 
 Adding products:
-Use HTTP PUT
+Use HTTP POST
 A new category and product can be specified here. If an existing category with a new product is specified the product will be added to this category without effecting the previous entries. If there is an exact match of product and category, the old product will be overwritten with the new quantity.
-Specify the desired product and category using the hierarchical URL e.g. /animals/giraffe
-parameters:
-quant=<int> to specify stock. New quantities default to 0
+Specify the desired category using the hierarchical URL e.g. /<category>?<querystring>
+Include the desired items and their quantities in the HTTP body, formatted as JSON objects (ensure that the inner quotes are double quotes).
+You can add as many items as you like but you can only add to one category at a time.
 Errors:
 "category exists" - when adding a category without an item this will be displayed if the specified category already exists in the database file.
 "specify category and item" - occurs when both category and item are empty, this is a meaningless operation, you can not create a new root directory

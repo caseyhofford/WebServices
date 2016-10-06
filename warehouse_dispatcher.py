@@ -13,6 +13,7 @@ def processRequest(environ):
     method = environ['REQUEST_METHOD']#takes method from environ passed by server
     path = environ['PATH_INFO']#takes path from environ
     patharray = path.split('/')#creates an array of the path hierarchy
+    items = {}
     if '' in patharray:#removes the preceding empty string of the root path
         patharray.remove('')
     if len(patharray) > 2:#there are only two levels of resources allowed
@@ -26,16 +27,33 @@ def processRequest(environ):
     else:#if nothing is specified, both are empy
         category = ''
         item = ''
+
     querystring = urllib.parse.parse_qs(environ['QUERY_STRING'])#creates a dictionary of query parameters
     if 'quant' in querystring:
         quantity = int(querystring['quant'][0])#0th index needed due to formatting of parse_qs as key:list pairs
     else:
         quantity = 0#default quantity as specified in the API
+    if 'max' in querystring:
+        maximum = int(querystring['max'][0])
+    else:
+        maximum = None
+    if 'min' in querystring:
+        minimum = int(querystring['min'][0])
+    else:
+        minimum = 0
+
+    if environ['CONTENT_LENGTH'] != '':
+        contentlength = int(environ['CONTENT_LENGTH'])
+        content = environ['wsgi.input'].read(contentlength).decode('utf-8')
+    else:
+        contentlength = 0
+        content = ""
+
     if method == 'GET':#GET will return the requested portion of the warehouse data
-        return printout(item, category)
-    elif method == 'PUT':#PUT will return the added item and quantity
-        return add(item, category, quantity)
-    elif method == 'POST':#POST can increment or decrement as specified in the option parameter of the query string
+        return printout(item, category, maximum, minimum)
+    elif method == 'POST':#POST will return the added item and quantity
+        return add(content, category)
+    elif method == 'PUT':#PUT can increment or decrement as specified in the option parameter of the query string
         if 'option' in querystring and item != '':
             if querystring['option'][0] == 'increment':
                 return increment(item, category, quantity)
@@ -46,6 +64,6 @@ def processRequest(environ):
         else:
             return({'status':'400 Bad Request','content':'plese include the option parameter in your query string and a path to an item, not a category'})
     elif method == 'DELETE':#this removes the selected item and returns the whole database
-        return remove(item, category)
+        return(remove(item, category))
     else:#no other HTTP methods are allowed
         return({'status':'400 Bad Request','content':'Specified method "' + method + '" is not valid'})

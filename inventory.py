@@ -2,20 +2,29 @@ import json
 
 
 #method used to add items and categories
-def add(item, category, quantity):
+def add(body, category):
     db = open('database', mode='r')
-    if quantity < 0:
-        return({'status':'400 Bad Request','content':'quantity must be positive'})
     try:
         dbdict = json.loads(db.read())
     except Exception as e:#for when dbdict is empty
         dbdict = dict()
     db.close()
-    if category != '' and item != '':#when category and item are specified an item is added
+    item = json.loads(body)
+    print(item)
+    if category != '' and len(item) > 0:#when category and item are specified an item is added
         if category in dbdict:
-            dbdict[category][item] = quantity
+            for key in item:
+                if item[key] >= 0:
+                    dbdict[category][key] = item[key]
+                else:
+                    return({'status':'400 Bad Request','content':'quantity must be positive'})
         else:
-            dbdict[category] = {item:quantity}#adds category if it doesn't exist
+            dbdict[category] = {}#adds category if it doesn't exist
+            for key in item:
+                if item[key] >= 0:
+                    dbdict[category][key] = item[key]
+                else:
+                    return({'status':'400 Bad Request','content':'quantity must be positive'})
     elif category != '' and item == '':#adds just a category
         if category in dbdict:
             return({'status':'200 OK','content':'category exists'})#unless that category exists
@@ -26,7 +35,7 @@ def add(item, category, quantity):
     db = open('database', mode='w')
     db.write(json.dumps(dbdict))
     db.close()
-    dbjson = printout(item, category)#gets the current database to return to the client
+    dbjson = printout('', category, None, 0)#gets the current database to return to the client
     return dbjson
 
 #method used to remove items and categories completely
@@ -97,21 +106,21 @@ def increment(item, category, quantity):
     return dbjson
 
 #method used to return all or part of the warehouse database
-def printout(item, category):
+def printout(item, category, maximum, minimum):
     db = open('database', mode='r')
     try:
         dbjson = json.loads(db.read())
     except Exception as e:
         return({'status':'400 Bad Request','content':'database is empty'})
     db.close()
-    if item == '' and category == '':#for returning all items
+    if item == '' and category == '' and maximum == None and minimum == 0 :#for returning all items
         return({'status':'200 OK','content':dbjson})
-    elif item == '':#for returning a selected category
+    elif item == '' and maximum == None and minimum == 0:#for returning a selected category
         if category in dbjson:
             return {'status':'200 OK','content':dbjson[category]}
         else:
             return({'status':'400 Bad Request','content':'category not found'})
-    else:# returns just an item when requested
+    elif item != '' and category != '':# returns just an item when requested
         if category in dbjson:
             categorydict = dbjson[category]#in order to check if the item exists in the category the sub-dictionary is extracted
             if item in categorydict:
@@ -120,3 +129,34 @@ def printout(item, category):
                 return({'status':'400 Bad Request','content':'item not found'})
         else:
             return({'status':'400 Bad Request','content':'category not found'})
+    elif maximum != None and minimum >= 0:
+        outdict = {}
+        if item == '' and category == '':
+            for categories in dbjson:
+                outdict[categories] = {}
+                for items in dbjson[categories]:
+                    if dbjson[categories][items] >= minimum and dbjson[categories][items] <= maximum:
+                        outdict[categories][items] = dbjson[categories][items]
+            return({'status':'200 OK','content':outdict})
+        if item == '':
+            if category in dbjson:
+                for items in dbjson[categories]:
+                    if dbjson[categories][items] >= minimum and dbjson[categories][items] <= maximum:
+                        outdict[items] = dbjson[categories][items]
+                return({'status':'200 OK','content':outdict})
+            else:
+                return({'status':'404 Not Found','content':'category not found'})
+    elif maximum == None and minimum >= 0:
+        outdict = {}
+        if item == '' and category == '':
+            for categories in dbjson:
+                for items in dbjson[categories]:
+                    if dbjson[categories][items] >= minimum:
+                        outdict[items] = dbjson[categories][items]
+        if item == '':
+            if category in dbjson:
+                for items in dbjson[categories]:
+                    if dbjson[categories][items] >= minimum:
+                        outdict[items] = dbjson[categories][items]
+            else:
+                return({'status':'404 Not Found','content':'category not found'})
