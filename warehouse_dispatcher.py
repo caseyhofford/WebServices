@@ -42,17 +42,11 @@ def processRequest(environ):
     else:
         minimum = 0
 
-    if environ['CONTENT_LENGTH'] != '':
-        contentlength = int(environ['CONTENT_LENGTH'])
-        content = environ['wsgi.input'].read(contentlength).decode('utf-8')
-    else:
-        contentlength = 0
-        content = ""
 
     if method == 'GET':#GET will return the requested portion of the warehouse data
         return printout(item, category, maximum, minimum)
     elif method == 'POST':#POST will return the added item and quantity
-        return add(content, category)
+        return add(category, environ)
     elif method == 'PUT':#PUT can increment or decrement as specified in the option parameter of the query string
         if 'option' in querystring and item != '':
             if querystring['option'][0] == 'increment':

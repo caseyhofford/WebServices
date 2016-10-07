@@ -6,6 +6,8 @@ import pprint
 
 def hello_world_app(environ, start_response):
     requestsummary = processRequest(environ)#see the processRequest method of dispatcher, returns relevent aspects of eviron as a json object
+    #capture exceptions to set status codes
+    print(requestsummary['content'])
     status = requestsummary['status']  # HTTP Status
     headers = [('Content-type', 'application/json; charset=utf-8')]  # HTTP Headers
     start_response(status, headers)
