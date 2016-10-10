@@ -1,5 +1,8 @@
+#!/usr/bin/python3
+
 import http.client
 import unittest
+import json
 
 
 #good input
@@ -10,15 +13,15 @@ class TestStringMethods(unittest.TestCase):
         self.connection = http.client.HTTPConnection(url)
 
     def test_add_item(self):#Adds 10 cats and 5 dogs and checks that it receives the 200 error code back
-        self.connection.request('POST', '/animals', body='{"Cat":10,"Dog":5,"Bat":7}')
+        self.connection.request('POST', '/animals', body='{"Cat":40,"Dog":23,"Bat":7}')
         self.assertEqual(self.connection.getresponse().status, 200)
 
-    def test_add_category(self):#Adds category trees with no items
-        self.connection.request('POST', '/trees')
+    def test_add_category_itema(self):#Adds category trees with no items
+        self.connection.request('POST', '/fruits', body='{"Banana":3,"Peach":80}')
         self.assertEqual(self.connection.getresponse().status, 200)
 
-    def test_add_category_item(self):#Adds category trees with no items
-        self.connection.request('POST', '/fruits', body='{"Banana":3,"Peach":12}')
+    def test_add_category_itemb(self):#Adds category trees with no items
+        self.connection.request('POST', '/trees', body='{"Pine":3,"Maple":12}')
         self.assertEqual(self.connection.getresponse().status, 200)
 
     def test_delete(self):
@@ -39,32 +42,47 @@ class TestStringMethods(unittest.TestCase):
 
     def test_get_all(self):
         self.connection.request('GET','')
-        self.assertEqual(self.connection.getresponse().status, 200)
+        response = json.loads(self.connection.getresponse().read().decode('utf-8'))
+        self.assertEqual(response, json.loads('{"fruits": {"Banana": 3, "Peach": 80}, "animals": {"Dog": 23, "Bat": 6}}'))
 
     def test_get_category(self):
         self.connection.request('GET','/animals')
-        self.assertEqual(self.connection.getresponse().status, 200)
+        response = json.loads(self.connection.getresponse().read().decode('utf-8'))
+        self.assertEqual(response, json.loads('{"animals": {"Dog": 23, "Bat": 6}}'))
 
     def test_get_item(self):
         self.connection.request('GET','/animals/Dog')
-        self.assertEqual(self.connection.getresponse().status, 200)
+        response = json.loads(self.connection.getresponse().read().decode('utf-8'))
+        self.assertEqual(response, json.loads('{"animals": {"Dog": 23}}'))
 
     def test_get_max(self):
-        self.connection.request('GET','?max=9')
-        self.assertEqual(self.connection.getresponse().status, 200)
+        self.connection.request('GET','?max=18')
+        response = json.loads(self.connection.getresponse().read().decode('utf-8'))
+        self.assertEqual(response, json.loads('{"fruits": {"Banana": 3}, "animals": {"Bat": 6}}'))
 
     def test_get_min(self):
         self.connection.request('GET','?min=4')
-        self.assertEqual(self.connection.getresponse().status, 200)
+        response = json.loads(self.connection.getresponse().read().decode('utf-8'))
+        self.assertEqual(response, json.loads('{"fruits": {"Peach": 80}, "animals": {"Dog": 23, "Bat": 6}}'))
 
     def test_get_max_min(self):
         self.connection.request('GET','?max=9&min=4')
-        self.assertEqual(self.connection.getresponse().status, 200)
+        response = json.loads(self.connection.getresponse().read().decode('utf-8'))
+        self.assertEqual(response, json.loads('{"animals": {"Bat": 6}}'))
+
+    def test_get_prefix(self):
+        self.connection.request('GET','/animals/D?prefix=true')
+        response = json.loads(self.connection.getresponse().read().decode('utf-8'))
+        self.assertEqual(response, json.loads('{"animals": {"Dog": 23}}'))
 
 #error cases below.....here be dragons
 
     def test_add_negative(self):
-        self.connection.request('POST', '/animals', body='{"Cheetah":-10,"Bobcat":5,"Iguana":-7}')
+        self.connection.request('POST', '/animals', body='{"Cheetah":-10,"Iguana":-7}')
+        self.assertEqual(self.connection.getresponse().status, 400)
+
+    def test_add_category_only(self):#Adds category trees with no items
+        self.connection.request('POST', '/trees')
         self.assertEqual(self.connection.getresponse().status, 400)
 
     def test_add_category_negative(self):
@@ -92,7 +110,7 @@ class TestStringMethods(unittest.TestCase):
         self.assertEqual(self.connection.getresponse().status, 404)
 
     def test_decrement_negative(self):
-        self.connection.request('PUT', '/animals/Cat?option=decrement&quant=50')
+        self.connection.request('PUT', '/animals/Dog?option=decrement&quant=50')
         self.assertEqual(self.connection.getresponse().status, 400)
 
     def test_get_fake_category(self):

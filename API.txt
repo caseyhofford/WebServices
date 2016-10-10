@@ -3,10 +3,10 @@ Warehouse Server App API
 General Formatting
 hierarchical URL: /<category>/<product>
 Query Strings: place ? at the end of the hierarchical URL followed by the desired parameters, relevant parameters for each method are listed under the method heading below. Extra parameters will be ignored.
-Responses are formatted as JSON objects, all methods will return a JSON object of the category operated on or requested, if there is no category the entire inventory will be returned.
+Responses are formatted as JSON objects, all methods will return a JSON object of the category operated on or requested with the contents included, if there is no category the entire inventory will be returned as a nested json object (e.g. {<category>:{<item>:<quantity>}}).
 General Errors:
-"path too long" - there are too many "/" to the hierarchical portion of the URL
-"specified method <method> is not valid" - you used a HTTP method other than GET, PUT, POST or DELETE, these are the only valid methods for this API
+400 Bad Request "path too long" - there are too many "/" to the hierarchical portion of the URL
+400 Bad Request "specified method <method> is not valid" - you used a HTTP method other than GET, PUT, POST or DELETE, these are the only valid methods for this API
 
 
 Displaying stock
@@ -16,11 +16,13 @@ the base URL will return the entire stock
 /<category>/<product> will return the quantity of the product
 /<category> will return all products with quantities inside the specified category
 Parameters:
-max=<int> - only returns items with stocks below the specified value, can be run with min parameter as well
-min=<int> - only returns items with stocks above the specified value, can be run with max parameter as well
+max=<int> - only returns items with stocks below the specified value, can be run with min parameter as well, will be ignored if the item is specified.
+min=<int> - only returns items with stocks above the specified value, can be run with max parameter as well, will be ignored if the item is specified.
+prefix= true or false - allows you to specify that the item string is only the start of the item or items desired, will return all matches starting with the requested string in <product>, will be ignored if there is no item specified.
 Errors:
 Status Code: 404 Content: "category not found" - the specified category does not exist in the database file
 Status Code: 404 "item not found" - the specified item was not found in the selected category
+Status Code: 400 'Option parameter was incorrectly specified' - prefix was specified as something other than true or false
 
 
 Restocking/Selling items (increment and decrement):

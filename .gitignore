@@ -1,1 +1,7 @@
 __pycache__
+curltest.txt
+database
+dispatcher.py
+server.py
+items*
+something.db
