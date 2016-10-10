@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 from wsgiref.simple_server import make_server
 from wsgiref.util import request_uri
-from warehouse_dispatcher import *
+from dispatcher import *
 import pprint
 import sys
 
