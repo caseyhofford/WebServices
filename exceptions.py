@@ -17,3 +17,7 @@ class ItemOrCategoryMissing(Exception):
 class OptionIncorrect(Exception):
   def __init__(self,*args,**kwargs):
       Exception.__init__(self,'Option parameter was incorrectly specified')
+
+class AuthenticationError(Exception):
+    def __init__(self, *args, **kwargs):
+        Exception.__init__(self,'Authentication Failed')

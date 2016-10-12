@@ -43,16 +43,22 @@ def hello_world_app(environ, start_response):
         start_response(status, headers)
         print(E)
         return [bytes("400 Option must be specified".encode('utf-8'))]
-
+    except AuthenticationError as E:
+        status = "403 Forbidden"
+        headers = [('Content-type', 'application/json; charset=utf-8')]  # HTTP Headers
+        start_response(status, headers)
+        print(E)
+        return [bytes("403 Not Authorized".encode('utf-8'))]
 
     #capture exceptions to set status codes
 
-httpd = make_server('', 8000, hello_world_app)
-print("Serving on port 8000...")
-if len(sys.argv) > 1:
-    storage = sys.argv[1]
-else:
-    storage = input('Please choose "database" or "files" for storage')
+#httpd = make_server('', 8000, hello_world_app)
+#print("Serving on port 8000...")
+#if len(sys.argv) > 1:
+#    print(sys.argv)
+#    storage = database
+#lse:
+storage = input('Please choose "database" or "files" for storage')
 
-# Serve until process is killed
-httpd.serve_forever()
+#Serve until process is killed
+#httpd.serve_forever()

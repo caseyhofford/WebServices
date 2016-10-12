@@ -3,14 +3,19 @@
 import http.client
 import unittest
 import json
+import ssl
+import base64
 
 
 #good input
 
 class TestStringMethods(unittest.TestCase):
     def setUp(self):
-        url = '127.0.0.1:8000'
-        self.connection = http.client.HTTPConnection(url)
+        url = '127.0.0.1'
+        gcontext = ssl.SSLContext(ssl.PROTOCOL_TLSv1)
+        self.connection = http.client.HTTPSConnection(url,443,context=gcontext)
+        login = base64.b64encode(b'casey:password').decode()
+        self.hdrs = { 'Authorization' : 'Basic ' + login }
 
     def test_add_item(self):#Adds 10 cats and 5 dogs and checks that it receives the 200 error code back
         self.connection.request('POST', '/animals', body='{"Cat":40,"Dog":23,"Bat":7}')
@@ -41,37 +46,37 @@ class TestStringMethods(unittest.TestCase):
         self.assertEqual(self.connection.getresponse().status, 200)
 
     def test_get_all(self):
-        self.connection.request('GET','')
+        self.connection.request('GET','', headers = self.hdrs)
         response = json.loads(self.connection.getresponse().read().decode('utf-8'))
         self.assertEqual(response, json.loads('{"fruits": {"Banana": 3, "Peach": 80}, "animals": {"Dog": 23, "Bat": 6}}'))
 
     def test_get_category(self):
-        self.connection.request('GET','/animals')
+        self.connection.request('GET','/animals', headers = self.hdrs)
         response = json.loads(self.connection.getresponse().read().decode('utf-8'))
         self.assertEqual(response, json.loads('{"animals": {"Dog": 23, "Bat": 6}}'))
 
     def test_get_item(self):
-        self.connection.request('GET','/animals/Dog')
+        self.connection.request('GET','/animals/Dog', headers = self.hdrs)
         response = json.loads(self.connection.getresponse().read().decode('utf-8'))
         self.assertEqual(response, json.loads('{"animals": {"Dog": 23}}'))
 
     def test_get_max(self):
-        self.connection.request('GET','?max=18')
+        self.connection.request('GET','?max=18', headers = self.hdrs)
         response = json.loads(self.connection.getresponse().read().decode('utf-8'))
         self.assertEqual(response, json.loads('{"fruits": {"Banana": 3}, "animals": {"Bat": 6}}'))
 
     def test_get_min(self):
-        self.connection.request('GET','?min=4')
+        self.connection.request('GET','?min=4', headers = self.hdrs)
         response = json.loads(self.connection.getresponse().read().decode('utf-8'))
         self.assertEqual(response, json.loads('{"fruits": {"Peach": 80}, "animals": {"Dog": 23, "Bat": 6}}'))
 
     def test_get_max_min(self):
-        self.connection.request('GET','?max=9&min=4')
+        self.connection.request('GET','?max=9&min=4', headers = self.hdrs)
         response = json.loads(self.connection.getresponse().read().decode('utf-8'))
         self.assertEqual(response, json.loads('{"animals": {"Bat": 6}}'))
 
     def test_get_prefix(self):
-        self.connection.request('GET','/animals/D?prefix=true')
+        self.connection.request('GET','/animals/D?prefix=true', headers = self.hdrs)
         response = json.loads(self.connection.getresponse().read().decode('utf-8'))
         self.assertEqual(response, json.loads('{"animals": {"Dog": 23}}'))
 
@@ -114,12 +119,24 @@ class TestStringMethods(unittest.TestCase):
         self.assertEqual(self.connection.getresponse().status, 400)
 
     def test_get_fake_category(self):
-        self.connection.request('GET', '/gase')
+        self.connection.request('GET', '/gase', headers = self.hdrs)
         self.assertEqual(self.connection.getresponse().status, 404)
 
     def test_get_fake_item(self):
-        self.connection.request('GET', '/fruits/pine')
+        self.connection.request('GET', '/fruits/pine', headers = self.hdrs)
         self.assertEqual(self.connection.getresponse().status, 404)
+
+    #HTTPS verification
+    def test_http_get_auth(self):
+        self.connection.request( 'GET', '', headers = self.hdrs )
+        response = json.loads(self.connection.getresponse().read().decode('utf-8'))
+        self.assertEqual(response, json.loads('{"fruits": {"Banana": 3, "Peach": 80}, "animals": {"Dog": 23, "Bat": 6}}'))
+
+    def test_bad_auth(self):
+        login = base64.b64encode(b'trump:password').decode()
+        hdrs = { 'Authorization' : 'Basic ' + login }
+        self.connection.request( 'GET', '', headers = hdrs)
+        self.assertEqual(self.connection.getresponse().status, 403)
 
 if __name__ == '__main__':
     unittest.main()

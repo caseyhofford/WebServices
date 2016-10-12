@@ -2,6 +2,7 @@ import json
 import urllib
 from exceptions import *
 import abc
+import base64
 
 class Warehouse(metaclass = abc.ABCMeta):
     def getBody(self,environ):#returns a dictionary of the HTTP body
@@ -71,13 +72,22 @@ class Warehouse(metaclass = abc.ABCMeta):
             raise OptionIncorrect
 
     def prePrintProcessing(self,environ):#allows the printout method to be called by all other methods for returning desired json objects
-        request = self.parseInput(environ)
-        item = request['item']
-        category = request['category']
-        maximum = request['maximum']
-        minimum = request['minimum']
-        prefix = request['prefix']
-        return self.printout(item, category, maximum, minimum, prefix)
+        if 'HTTP_AUTHORIZATION' in environ:
+            parts = [ x for x in environ['HTTP_AUTHORIZATION'].split(' ') if x.strip() ]
+            assert parts[0] == 'Basic'
+            authentication = base64.b64decode(parts[1]).decode()
+            if authentication == 'casey:password':
+                request = self.parseInput(environ)
+                item = request['item']
+                category = request['category']
+                maximum = request['maximum']
+                minimum = request['minimum']
+                prefix = request['prefix']
+                return self.printout(item, category, maximum, minimum, prefix)
+            else:
+                raise AuthenticationError
+        else:
+            raise AuthenticationError
 
 
     #method used to add items and categories
