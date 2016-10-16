@@ -1,0 +1,12 @@
+Dependencies:
+pip install --upgrade google-api-python-client
+
+Troubleshooting:
+If you are experiencing issues with accessing the google api server please disable ipv6 and try again. This can be done by adding the following lines to the specified file.
+/etc/modprobe.d/aliases
+replace:
+  alias net-pf-10 ipv6
+with:
+  alias net-pf-10 off
+  alias ipv6 off
+then reboot

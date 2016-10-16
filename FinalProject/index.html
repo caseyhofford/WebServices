@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+</head>
+
+<body>
+<script type="text/javascript" src="http://code.jquery.com/jquery-2.1.4.min.js"></script>
+
+<h1>BusNotifier</h1>
+
+<input type="time" name="Arrival Time" value="Time"></input>
+
+<input type="number" name="destlat" value=47.609661></input>
+
+<input type="number" name="destlon" value=-122.337795></input>
+
+<button type="button" onclick="postLocation()">Get Nearby Bus Stops</button>
+
+<button type="button" onclick="postAuth()">Authorize Google Calendar</button>
+
+<p id="myLocation"></p>
+
+<script>
+var lat = 47.755944.toString();
+var lon = -122.345626.toString();
+
+navigator.geolocation.getCurrentPosition = function(success, failure) {
+    success({ coords: {
+        latitude: lat,
+        longitude: lon,
+
+    }, timestamp: Date.now() });
+}
+
+function getLocation(){
+  if(navigator.geolocation){
+    var geo = navigator.geolocation;
+    geo.getCurrentPosition(showLocation, error)
+  }
+}
+
+function showLocation(result){
+  document.getElementById("myLocation").innerHTML = "Lat: "+result.coords.latitude+" Long: "+result.coords.longitude
+}
+
+function error(error){
+  alert("An error has occured")
+}
+
+function postLocation() {
+    $.ajax({
+        type: "POST",
+        url: "/dispatcher.py",
+        data: '{ "location": {"lat":'+lat+',"lon":'+lon+'} }',
+        success: callbackFunc
+    });
+}
+
+function postAuth() {
+  window.location = 'https://accounts.google.com/o/oauth2/auth?client_id=434441611865-vb041elv7otsm7a7ujbgujmhu0e4go32.apps.googleusercontent.com&response_type=code&redirect_uri=http%3A%2F%2F127.0.0.2%3A8000&scope=https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fcalendar&access_type=offline';
+}
+
+/*function postAuth() {
+    $.ajax({
+        type: "POST",
+        url: "/dispatcher.py?func=authenticate",
+        data: '{ "location": {"lat":'+lat+',"lon":'+lon+'} }',
+        success: callbackAuth
+    });
+}*/
+
+function callbackFunc(response) {
+  console.log("callbackFunc");
+  console.log(response);
+}
+
+function callbackAuth(response) {
+  var auth = JSON.parse(response);
+  window.location = auth.auth_uri;
+}
+
+</script>
+</body>
+</html>
