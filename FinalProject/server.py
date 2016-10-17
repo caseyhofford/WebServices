@@ -13,7 +13,7 @@ def simple_app(environ, start_response):
         start_response(status, headers)
         return[bytes(response)]
     except Exception as E:
-        print(E)
+        #print(E)
         return(bytes(E.encode("utf-8")))
 
 httpd = make_server('', 8000, simple_app)

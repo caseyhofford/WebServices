@@ -9,11 +9,11 @@
 
 <h1>BusNotifier</h1>
 
-<input type="time" name="Arrival Time" value="Time"></input>
+<input type="datetime-local" id="Arrival Time" value="Time"></input>
 
-<input type="number" name="destlat" value=47.609661></input>
+<input type="number" id="destlat" value=47.609661></input>
 
-<input type="number" name="destlon" value=-122.337795></input>
+<input type="number" id="destlon" value=-122.337795></input>
 
 <button type="button" onclick="postLocation()">Get Nearby Bus Stops</button>
 
@@ -49,11 +49,22 @@ function error(error){
 }
 
 function postLocation() {
+  var destlat = document.getElementById("destlat").value;
+  var destlon = document.getElementById("destlon").value;
+  var arrivaltime = document.getElementById("Arrival Time").value;
+  var arrival = arrivaltime.replace(":"," ");
+  console.log(arrivaltime);
+  body = {};
+  body['origin'] = {"lat":lat,"lon":lon};
+  body['destination'] = {"lat":destlat,"lon":destlon};
+  body['arrival'] = arrival;
+  //body = { "origin": {"lat":'+lat+',"lon":'+lon+'}, "destination": {"lat":'+destlat+',"lon":'+destlon+'}, "arrival":'+arrival+' }
+  console.log(body)
     $.ajax({
         type: "POST",
         url: "/dispatcher.py",
-        data: '{ "location": {"lat":'+lat+',"lon":'+lon+'} }',
-        success: callbackFunc
+        data: JSON.stringify(body),
+        success: testcallbackFunc
     });
 }
 
@@ -70,9 +81,23 @@ function postAuth() {
     });
 }*/
 
-function callbackFunc(response) {
-  console.log("callbackFunc");
+/*function callbackFunc(response) {
+  setInterval(updateCalendar(){
+    $.ajax({
+        type: "POST",
+        url: "/dispatcher.py?func=update",
+        data: response,
+    });
+  },60000);
+}*/
+
+function testcallbackFunc(response) {
   console.log(response);
+  var trip = JSON.parse(response);
+  var stopId = trip['stopId'];
+  var serviceDate = trip['servicedate'];
+  var tripId = trip['tripId'];
+  window.location = 'https://accounts.google.com/o/oauth2/auth?client_id=434441611865-vb041elv7otsm7a7ujbgujmhu0e4go32.apps.googleusercontent.com&response_type=code&redirect_uri=http%3A%2F%2F127.0.0.2%3A8000&scope=https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fcalendar&access_type=offline&state='+stopId+'-'+serviceDate+'-'+tripId;
 }
 
 function callbackAuth(response) {
