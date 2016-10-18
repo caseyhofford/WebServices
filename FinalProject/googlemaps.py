@@ -14,6 +14,7 @@ def getRoute(lat,lon,destlat,destlon,arrival_time):
     URL = '/maps/api/directions/json?origin='+strlat+"%2C"+strlon+'&destination='+strdestlat+"%2C"+strdestlon+'&mode=transit&arrival_time='+strarrival+'&key=AIzaSyBvD87VOpZZZUOl6mo5vxtTWeUCgN9n2AQ'
     connection.request("GET", URL)
     response = json.loads(connection.getresponse().read().decode('utf-8'))
+    print(json.dumps(response))
     steps = response['routes'][0]['legs'][0]['steps']
     i = 0
     for index in steps:

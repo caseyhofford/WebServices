@@ -4,6 +4,7 @@ import json
 from googlemaps import *
 import time
 import datetime
+import threading
 
 def processRequest(environ):
     print("entered processRequest")
@@ -16,8 +17,7 @@ def processRequest(environ):
         return(getCal(parsed['code']).encode('utf-8'))
     elif method == "GET":
         return(open('index.html').read().encode('utf-8'))
-
-    elif method == "POST" and 'func' in parsed:
+    elif method == "PUT":
         body = getBody(environ)
         updateCalendar(body)
     elif method == "POST":
@@ -31,9 +31,8 @@ def getTrip(parsed):
     arrival = parsed['arrival']
     arrival = arrival + 'Z-0800'
     arrivalstruct = time.strptime(arrival,"%Y-%m-%dT%H %MZ%z")
-    print(arrivalstruct)
     arrivalseconds = time.mktime(arrivalstruct)
-    print("getTrip:31:  "+str(arrivalseconds))
+    print("getTrip:35:  "+str(arrivalseconds))
     route = getRoute(origin['lat'],origin['lon'],destination['lat'],destination['lon'],arrivalseconds)
     stoplat = route[1]['destination']['lat']
     stoplon = route[1]['destination']['lng']
@@ -59,6 +58,7 @@ def makeEventPage(code,state):
     print("makeEventPage:52:  "+str(departuretime))
     calendar = Calendar(code)
     eventId = calendar.makeEvent(departuretime,arrivalTime,code)
+    threading.Timer(3.0, updateCalendar, args=[eventId,tripId,stopId,serviceDate,calendar]).start()
     print("event ID: "+eventId)
     webpage = open("eventtemplate.html")
     template = webpage.read()
@@ -68,9 +68,11 @@ def makeEventPage(code,state):
     output.close()
     return(open("event.html").read().encode("utf-8"))
 
-def updateCalendar(body):
-    arrivaltime = getArrival(body['tripId'],body['stopId'],body['serviceDate'])
-    updateEvent(body['eventId'],arrivaltime)
+def updateCalendar(eventId,tripId,stopId,serviceDate,calendar):
+    print("updateCalendar entered")
+    arrivaltime = getArrival(tripId,stopId,serviceDate)
+    calendar.updateEvent(eventId,arrivaltime)
+    return
 
 def getBody(environ):
     outdict = {}
@@ -94,4 +96,6 @@ def parse(environ):
         outdict['code'] = querystring['code'][0]
     if 'state' in querystring:
         outdict['state'] = querystring['state'][0]
+    if 'func' in querystring:
+        outdict['func'] = querystring['func'][0]
     return outdict

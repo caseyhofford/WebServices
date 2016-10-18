@@ -23,6 +23,8 @@ class Calendar():
         print(code)
         authorization = code
         self.credentials = self.flow.step2_exchange(authorization)
+        http = self.credentials.authorize(httplib2.Http())
+        self.service = discovery.build('calendar', 'v3', http=http)
 
     def getCal(self,code):
         """Shows basic usage of the Google Calendar API.
@@ -32,12 +34,12 @@ class Calendar():
         """
         output = ''
         #credentials = getCredentials(code)
-        http = self.credentials.authorize(httplib2.Http())
-        service = discovery.build('calendar', 'v3', http=http)
+        #http = self.credentials.authorize(httplib2.Http())
+        #service = discovery.build('calendar', 'v3', http=http)
 
         now = datetime.datetime.utcnow().isoformat() + 'Z' # 'Z' indicates UTC time
         print('Getting the upcoming 10 events')
-        eventsResult = service.events().list(
+        eventsResult = self.service.events().list(
             calendarId='primary', timeMin=now, maxResults=10, singleEvents=True,
             orderBy='startTime').execute()
         events = eventsResult.get('items', [])
@@ -51,8 +53,8 @@ class Calendar():
 
     def makeEvent(self,departuretime,arrivaltime,code):
         #credentials = getCredentials(code)
-        http = self.credentials.authorize(httplib2.Http())
-        service = discovery.build('calendar', 'v3', http=http)
+        #http = self.credentials.authorize(httplib2.Http())
+        #service = discovery.build('calendar', 'v3', http=http)
         rfcdeparture = time.strftime('%Y-%m-%dT%H:%M:%S',time.gmtime(int(departuretime)/1000))
         rfcarrival = time.strftime('%Y-%m-%dT%H:%M:%S',time.gmtime(int(arrivaltime)))
         print(departuretime)
@@ -77,10 +79,11 @@ class Calendar():
           },
         }
         print(body)
-        event = service.events().insert(calendarId='primary',sendNotifications=True, fields="id,start/dateTime", body=body ).execute()
+        event = self.service.events().insert(calendarId='primary',sendNotifications=True, fields="id,start/dateTime", body=body ).execute()
         return(event['id'])
 
-    def updateEvent(eventId,startTime):
-        event = service.events().get(calendarId='primary', eventId=eventId).execute()
+    def updateEvent(self,eventId,startTime):
+        event = self.service.events().get(calendarId='primary', eventId=eventId).execute()
         event['start']['datetime'] = startTime
-        updated_event = service.events().update(calendarId='primary', eventId=event['id'], body=event).execute()
+        updated_event = self.service.events().update(calendarId='primary', eventId=event['id'], body=event).execute()
+        return
