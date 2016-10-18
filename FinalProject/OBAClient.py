@@ -5,31 +5,6 @@ import urllib
 
 #key: 8525e85c-4a2c-4729-8542-f072b45f1c13
 
-def parse(environ):
-    outdict = {}
-    try:
-        if int(environ['CONTENT_LENGTH']) > 0:
-            contentlength = int(environ['CONTENT_LENGTH'])
-            body = json.loads(environ['wsgi.input'].read(contentlength).decode('utf-8'))
-            outdict['origin'] = body['origin']
-            outdict['destination'] = body['destination']
-            outdict['arrival'] = body['arrival']
-            #print(outdict['origin']+'\n'+outdict['destination']+'\n'+outdict['arrival'])
-        else:
-            outdict['location'] = {}
-    except Exception as E:
-        print(E)
-        outdict['location'] = {}
-    querystring = urllib.parse.parse_qs(environ['QUERY_STRING'])
-    if 'func' in querystring:
-        outdict['func'] = querystring['func'][0]
-    if 'code' in querystring:
-        outdict['code'] = querystring['code'][0]
-    if 'state' in querystring:
-        outdict['state'] = querystring['state'][0]
-    return outdict
-
-
 def getNearbyStops(lat,lon):
     print('getting nearby stops')
     connection = http.client.HTTPConnection('api.pugetsound.onebusaway.org')
@@ -74,7 +49,7 @@ def getTripId(lat,lon,shortName,arrivalepochtime):
     for arrival in routeschedule:#find the bus with the closest arrival time
         arrivaltime = arrival['arrivalTime']/1000
         diff = arrivalepochtime-arrivaltime
-        print("line 75: "+diff)
+        print("line 75: "+str(diff))
         if diff > 0:
             bestbus = arrival
         else:

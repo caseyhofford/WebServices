@@ -9,7 +9,7 @@
 
 <h1>BusNotifier</h1>
 
-<input type="datetime-local" id="Arrival Time" value="Time"></input>
+<input type="datetime-local" id="Arrival Time" value=2016-10-17T17:45></input>
 
 <input type="number" id="destlat" value=47.609661></input>
 
@@ -97,7 +97,8 @@ function testcallbackFunc(response) {
   var stopId = trip['stopId'];
   var serviceDate = trip['servicedate'];
   var tripId = trip['tripId'];
-  window.location = 'https://accounts.google.com/o/oauth2/auth?client_id=434441611865-vb041elv7otsm7a7ujbgujmhu0e4go32.apps.googleusercontent.com&response_type=code&redirect_uri=http%3A%2F%2F127.0.0.2%3A8000&scope=https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fcalendar&access_type=offline&state='+stopId+'-'+serviceDate+'-'+tripId;
+  var arrivalTime = trip['arrivalTime']
+  window.location = 'https://accounts.google.com/o/oauth2/auth?client_id=434441611865-vb041elv7otsm7a7ujbgujmhu0e4go32.apps.googleusercontent.com&response_type=code&redirect_uri=http%3A%2F%2F127.0.0.2%3A8000&scope=https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fcalendar&access_type=offline&state='+stopId+'-'+serviceDate+'-'+tripId+'-'+arrivalTime;
 }
 
 function callbackAuth(response) {
