@@ -1,9 +1,43 @@
+Use of third party APIs:
+This application accesses three different external APIs in order to achieve its goal. At the core is the use of the One Bus Away API which provides live bus data to the user. This is used in order to accurately determine when the bus will arrive at the departure stop. Secondly the application uses the Google Maps directions API in order to determine the best route to use in order to get to the requested destination. The directions API is capable of giving directions for various modes of travel (walking, driving, biking, transit). In this implementation I have used the transit mode which provides walking directions to the transit stops as well as the best bus routes to take in order to reach your destination as quickly as possible. Finally I use the Google Calendar API in order to create calendar events that will notify the user when they need to leave in order to get to the bus.
+
+The application works as follows:
+The user inputs their destination and their desired time of arrival.
+The user presses “Add bus to GCal” which sends the input to the webserver.
+The webserver uses the Google Maps Directions API to find the best route and returns an array with each leg (walking and bus) of the trip. If the user is not at the bus stop already, this will include walking legs as integers of seconds needed to get to the stop and bus legs as JSON objects with the destination, origin, route name and arrival time.
+The webserver will then use the destination stops location, the route “shortName” and the destination stop arrival time to find the unique* tripId.
+The webserver then finds the departure stops Id and the service date of the trip, which are the requirements to get live bus data from One Bus Away.
+The server returns this information along with the duration of the first walking leg of the trip to the client.
+The client is then redirected to the OAuth authorization page in order to give authority to the app. This redirects to the frontend webpage with the departure stop Id, service data, trip Id, arrival time and walking time in the URL query string.
+The webserver receives this GET request with the query string and makes an Event in GCal.
+
+*  - the tripId field is not unique and therefore there are some issues when rides are scheduled too far in advance.
+
+The code was intended to continually poll the OneBusAway service in order to update the calendar event whenever the bus began to run late. I did not succeed in implementing this.
+
+Challenges:
+This project took substantially more time at every step than I had initially expected. Figuring out each different webservice took a ton of time due to the large variability in design, even within the RESTful standard. The query methods and format of the returned objects was highly variable. Additionally this project required me to figure out how to relate the results of two different webservices together. The google maps API and the OneBusAway API were both referring to the same buses and trips, but using different IDs and vocabulary. This required me to determine which pieces of information I needed to extract in order to search the OneBusAway database and retrieve the correct bus. This problem turned out to be insurmountable in some cases because the tripId fields for OneBusAway are not completely unique and the schedule does not include vehicleIds. Because of this requests for routes too far in the future fail.
+Interoperability was a difficulty for a while due to my lack of experience with javascript. I finally figured out how to use ajax and callback functions in order to pass parameters back and forth between client and server. This was made even more difficult when I added OAuth to the mix. Because of the redirect required for OAuth I struggled with passing parameters through to the server after the authentication request. This was solved by encoding them in a passback URL to the OAuth page.
+I was unable to complete the updating aspect of this project. Although I had a basic idea of what I needed to do, I ran out of time after focusing on making the basic functionality of the application run more smoothly. This problem was difficult because I wanted to allow a user to leave their browser and webpage while continuing a process on the server. I attempted to use threading for this purpose, however it did not behave as I had expected and would not update the event.
+From this project I learned a lot about the variability of webservices and the complexity of their design. I learned how to manipulate and work with their results to find meaningful information and query other webservices. I also learned a lot about how steep the learning curve can be for new web services and how difficult it is to integrate a new web service into an application. Additionally I realized how sloppy coding can quickly accumulate and become a major hindrance to further development. I realized that I could easily get lost in portions of my own code when I didn’t leave good comments or write the code in a clear way. This made fixing bugs far harder than it needed to be. Overall this project gave me a good feel for how to work with webservices in an efficient and effective way and will allow me to effectively use similar services in the future.
+
+Documentation:
 Dependencies:
 pip install --upgrade google-api-python-client
 
 For testing use the following google credentials:
 username: testcaseyh
 password: cp341Final
+
+Calls:
+GET:
+No parameters
+-returns the UI webpage
+?code=<OAuth2 code>?state=<stopid>-<servicedate>-<tripid>-<arrivaltimesecs>-<walktimesecs>
+-posts the bus ride to the authorized google calendar, this formatting is done in order to allow these query parameters to be passed through the OAuth page and back to the server.
+
+POST:
+Body: JSON object {‘origin’:{‘lat’:<originlat>,’lon’<originlon>},’destination’:<destination string>,’arrival’:<arrivaltime as YYYY-MM-DD'T'HH MM>
 
 Troubleshooting:
 Make sure your VM is set to use port forwarding on 127.0.0.2:8000
