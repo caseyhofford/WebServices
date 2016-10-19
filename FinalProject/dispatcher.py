@@ -7,7 +7,6 @@ import datetime
 import threading
 
 def processRequest(environ):
-    print("entered processRequest")
     method = environ['REQUEST_METHOD']
     parsed = parse(environ)
     if method == "GET" and 'code' in parsed and 'state' in parsed:
@@ -25,27 +24,35 @@ def processRequest(environ):
         summary = getTrip(body)
         return(json.dumps(summary).encode('utf-8'))
 
-def getTrip(parsed):
-    origin = parsed['origin']
-    destination = parsed['destination']
-    arrival = parsed['arrival']
-    arrival = arrival + 'Z-0800'
+def getTrip(body):
+    origin = body['origin']
+    destination = body['destination']
+    arrival = body['arrival']
+    arrival = arrival + 'Z-0600'
     arrivalstruct = time.strptime(arrival,"%Y-%m-%dT%H %MZ%z")
     arrivalseconds = time.mktime(arrivalstruct)
-    print("getTrip:35:  "+str(arrivalseconds))
-    route = getRoute(origin['lat'],origin['lon'],destination['lat'],destination['lon'],arrivalseconds)
-    stoplat = route[1]['destination']['lat']
-    stoplon = route[1]['destination']['lng']
-    routename = route[1]['route']
-    arrivaltime = route[1]['arrival']
-    print("getTrip:35:  "+str(arrivaltime))
-    tripId = getTripId(stoplat,stoplon,routename,arrivaltime)
-    startlat = route[1]['origin']['lat']
-    startlon = route[1]['origin']['lng']
-    servicedate = getServiceDate(tripId)
-    departurestopid = getStopId(startlat,startlon)
-    return({'tripId':tripId,'stopId':departurestopid,'servicedate':servicedate,'arrivalTime':arrivaltime})
-
+    route = getRoute(origin['lat'],origin['lon'],destination,arrivalseconds)
+    stoplat = 0
+    stoplon = 0
+    routename = ""
+    arrivaltime = 0
+    walk = 0
+    print("getTrip:route details "+str(route))
+    for legs in route:
+        if type(route[legs]) == dict:
+            stoplat = route[legs]['destination']['lat']
+            stoplon = route[legs]['destination']['lng']
+            routename = route[legs]['route']
+            arrivaltime = route[legs]['arrival']
+            startlat = route[legs]['origin']['lat']
+            startlon = route[legs]['origin']['lng']
+            tripId = getTripId(stoplat,stoplon,routename,arrivaltime)
+            servicedate = getServiceDate(tripId)
+            departurestopid = getStopId(startlat,startlon)
+            return({'tripId':tripId,'stopId':departurestopid,'servicedate':servicedate,'arrivalTime':arrivaltime,'walk':walk})
+        elif type(route[legs]) == int:
+            walk = route[legs]
+    raise CantGetThereFromHere("No transit leg found in the google maps trip")
 
 def makeEventPage(code,state):
     trip = state.split("-")
@@ -53,14 +60,13 @@ def makeEventPage(code,state):
     serviceDate = trip[1]
     tripId = trip[2]
     arrivalTime = trip[3]
-    print("makeEventPage:50:  "+str(arrivalTime))
+    walk = trip[4]
     departuretime = getArrival(tripId,stopId,serviceDate)
-    print("makeEventPage:52:  "+str(departuretime))
     calendar = Calendar(code)
-    eventId = calendar.makeEvent(departuretime,arrivalTime,code)
-    threading.Timer(3.0, updateCalendar, args=[eventId,tripId,stopId,serviceDate,calendar]).start()
-    print("event ID: "+eventId)
-    webpage = open("eventtemplate.html")
+    startwalking = departuretime - (int(walk)*1000)
+    eventId = calendar.makeEvent(startwalking,arrivalTime,code)
+    threading.Timer(3.0, updateCalendar, args=[eventId,tripId,stopId,serviceDate,calendar,departuretime]).start()
+    webpage = open("eventtemplate.html")#this functionality is intended to allow the client to receive the trip information for updates to the event
     template = webpage.read()
     eventpage = template.format(**locals())
     output = open("event.html","w")
@@ -68,10 +74,9 @@ def makeEventPage(code,state):
     output.close()
     return(open("event.html").read().encode("utf-8"))
 
-def updateCalendar(eventId,tripId,stopId,serviceDate,calendar):
-    print("updateCalendar entered")
-    arrivaltime = getArrival(tripId,stopId,serviceDate)
-    calendar.updateEvent(eventId,arrivaltime)
+def updateCalendar(eventId,tripId,stopId,serviceDate,calendar,departureTime):
+    departureTime = getArrival(tripId,stopId,serviceDate)
+    calendar.updateEvent(eventId,departureTime)
     return
 
 def getBody(environ):

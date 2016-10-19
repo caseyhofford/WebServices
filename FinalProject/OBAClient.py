@@ -6,7 +6,6 @@ import urllib
 #key: 8525e85c-4a2c-4729-8542-f072b45f1c13
 
 def getNearbyStops(lat,lon):
-    print('getting nearby stops')
     connection = http.client.HTTPConnection('api.pugetsound.onebusaway.org')
     connection.request('GET','/api/where/stops-for-location.json?key=8525e85c-4a2c-4729-8542-f072b45f1c13&lat='+lat+'&lon='+lon+'&time='+time)
     response = connection.getresponse().read()
@@ -49,10 +48,10 @@ def getTripId(lat,lon,shortName,arrivalepochtime):
     for arrival in routeschedule:#find the bus with the closest arrival time
         arrivaltime = arrival['arrivalTime']/1000
         diff = arrivalepochtime-arrivaltime
-        print("line 75: "+str(diff))
         if diff > 0:
             bestbus = arrival
         else:
+            print("selected bus time: "+ str(arrivaltime))
             break
         i+=1
     tripId = bestbus['tripId']
@@ -70,6 +69,10 @@ def getArrival(tripId,stopId,serviceDate):
     connection = http.client.HTTPConnection('api.pugetsound.onebusaway.org')
     connection.request('GET','/api/where/arrival-and-departure-for-stop/'+stopId+'.json?tripId='+tripId+'&serviceDate='+serviceDate+'&key=8525e85c-4a2c-4729-8542-f072b45f1c13')
     response = json.loads(connection.getresponse().read().decode('utf-8'))
-    return response['data']['entry']['predictedArrivalTime']
+    arrivaltime = response['data']['entry']['predictedArrivalTime']
+    if arrivaltime == 0:
+        raise PastTripError()
+    print("OBA getArrival time: "+str(arrivaltime))
+    return arrivaltime
 
 #def getBestRoute(destlat,destlon,lat,lon,arrivaltime):

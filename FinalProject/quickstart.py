@@ -20,7 +20,6 @@ class Calendar():
 
     def __init__(self,code):
         self.flow = client.flow_from_clientsecrets('client_secret.json',scope='https://www.googleapis.com/auth/calendar',redirect_uri='http://127.0.0.2:8000')
-        print(code)
         authorization = code
         self.credentials = self.flow.step2_exchange(authorization)
         http = self.credentials.authorize(httplib2.Http())
@@ -38,7 +37,6 @@ class Calendar():
         #service = discovery.build('calendar', 'v3', http=http)
 
         now = datetime.datetime.utcnow().isoformat() + 'Z' # 'Z' indicates UTC time
-        print('Getting the upcoming 10 events')
         eventsResult = self.service.events().list(
             calendarId='primary', timeMin=now, maxResults=10, singleEvents=True,
             orderBy='startTime').execute()
@@ -57,8 +55,7 @@ class Calendar():
         #service = discovery.build('calendar', 'v3', http=http)
         rfcdeparture = time.strftime('%Y-%m-%dT%H:%M:%S',time.gmtime(int(departuretime)/1000))
         rfcarrival = time.strftime('%Y-%m-%dT%H:%M:%S',time.gmtime(int(arrivaltime)))
-        print(departuretime)
-        print(rfcdeparture)
+        print("makeEvent:60:departuretime: "+str(departuretime))
         body = {
           'summary': 'Bus Ride',
           'start': {

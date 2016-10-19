@@ -9,30 +9,49 @@
 
 <h1>BusNotifier</h1>
 
-<input type="datetime-local" id="Arrival Time" value=2016-10-17T17:45></input>
+<input type="datetime-local" id="Arrival Time" value=2016-10-18T20:45></input>
 
-<input type="number" id="destlat" value=47.609661></input>
+<input type="text" id="deststring" value='47.609712,-122.337795'></input>
 
-<input type="number" id="destlon" value=-122.337795></input>
+<button type="button" onclick="postLocation()">Add Bus to GCal</button>
 
-<button type="button" onclick="postLocation()">Get Nearby Bus Stops</button>
+<!--button type="button" onclick="postAuth()">Authorize Google Calendar</button-->
 
-<button type="button" onclick="postAuth()">Authorize Google Calendar</button>
+<p>Spoof Your Location: </p>
 
-<p>Spoof Your Location</p>
+<select id="mylocation">
+  <option value="47.755944, -122.345626">Aurora & 175th</option>
+  <option value="47.609712, -122.337795">3rd & Pike</option>
+  <option value="47.615279, -122.318136">Cal Anderson</option>
+  <option value="47.668719, -122.384746">Ballard(Leary & Market)</option>
+  <option value="47.651372, -122.351105">Fremont(Lenin Statue)</option>
+  <option value="47.466835, -122.334081">Burien</option>
+  <option value="47.774438, -122.341896">Aurora Transit Center</option>
+  <option value="47.703727, -122.327349">Northgate</option>
+  <option value="47.661895, -122.435513">Discovery Park(Lighthouse)</option>
+</select>
 
-<input type="number" id="destlat" value=47.755944></input>
+<button type="button" onclick="setMyLocation()">Set your Location</button>
 
-<input type="number" id="destlon" value=-122.345626></input>
-
-<p id="myLocation"></p>
+<p></p>
 
 <script>
+
 var lat = 47.755944.toString();
 var lon = -122.345626.toString();
 
+function setMyLocation(){
+  var selection = document.getElementById("mylocation");
+  var latlon = selection[selection.selectedIndex].value;
+  latlonarray = latlon.split(", ");
+  lat = latlonarray[0];
+  lon = latlonarray[1];
+  console.log("Location Set To: "+latlonarray)
+}
+
 navigator.geolocation.getCurrentPosition = function(success, failure) {
     success({ coords: {
+        //this function spoofs the HTML5 location data to match the variables lat and lon
         latitude: lat,
         longitude: lon,
 
@@ -42,7 +61,7 @@ navigator.geolocation.getCurrentPosition = function(success, failure) {
 function getLocation(){
   if(navigator.geolocation){
     var geo = navigator.geolocation;
-    geo.getCurrentPosition(showLocation, error)
+    geo.getCurrentPosition(showLocation, error);
   }
 }
 
@@ -50,61 +69,44 @@ function showLocation(result){
   document.getElementById("myLocation").innerHTML = "Lat: "+result.coords.latitude+" Long: "+result.coords.longitude
 }
 
-function error(error){
-  alert("An error has occured")
-}
-
 function postLocation() {
-  var destlat = document.getElementById("destlat").value;
-  var destlon = document.getElementById("destlon").value;
+  var destination = document.getElementById("deststring").value;
   var arrivaltime = document.getElementById("Arrival Time").value;
   var arrival = arrivaltime.replace(":"," ");
   console.log(arrivaltime);
   body = {};
   body['origin'] = {"lat":lat,"lon":lon};
-  body['destination'] = {"lat":destlat,"lon":destlon};
+  body['destination'] = destination;
   body['arrival'] = arrival;
-  //body = { "origin": {"lat":'+lat+',"lon":'+lon+'}, "destination": {"lat":'+destlat+',"lon":'+destlon+'}, "arrival":'+arrival+' }
   console.log(body)
     $.ajax({
         type: "POST",
         url: "/dispatcher.py",
         data: JSON.stringify(body),
-        success: testcallbackFunc
+        success: callAuth,
+        error: errorAlert
     });
+}
+
+function errorAlert(response){
+  console.log(response)
+  alert(response['responseText'])
 }
 
 function postAuth() {
   window.location = 'https://accounts.google.com/o/oauth2/auth?client_id=434441611865-vb041elv7otsm7a7ujbgujmhu0e4go32.apps.googleusercontent.com&response_type=code&redirect_uri=http%3A%2F%2F127.0.0.2%3A8000&scope=https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fcalendar&access_type=offline';
 }
 
-/*function postAuth() {
-    $.ajax({
-        type: "POST",
-        url: "/dispatcher.py?func=authenticate",
-        data: '{ "location": {"lat":'+lat+',"lon":'+lon+'} }',
-        success: callbackAuth
-    });
-}*/
 
-/*function callbackFunc(response) {
-  setInterval(updateCalendar(){
-    $.ajax({
-        type: "POST",
-        url: "/dispatcher.py?func=update",
-        data: response,
-    });
-  },60000);
-}*/
-
-function testcallbackFunc(response) {
+function callAuth(response) {
   console.log(response);
   var trip = JSON.parse(response);
   var stopId = trip['stopId'];
   var serviceDate = trip['servicedate'];
   var tripId = trip['tripId'];
   var arrivalTime = trip['arrivalTime']
-  window.location = 'https://accounts.google.com/o/oauth2/auth?client_id=434441611865-vb041elv7otsm7a7ujbgujmhu0e4go32.apps.googleusercontent.com&response_type=code&redirect_uri=http%3A%2F%2F127.0.0.2%3A8000&scope=https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fcalendar&access_type=offline&state='+stopId+'-'+serviceDate+'-'+tripId+'-'+arrivalTime;
+  var walk = trip['walk']
+  window.location = 'https://accounts.google.com/o/oauth2/auth?client_id=434441611865-vb041elv7otsm7a7ujbgujmhu0e4go32.apps.googleusercontent.com&response_type=code&redirect_uri=http%3A%2F%2F127.0.0.2%3A8000&scope=https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fcalendar&access_type=offline&state='+stopId+'-'+serviceDate+'-'+tripId+'-'+arrivalTime+'-'+walk;
 }
 
 function callbackAuth(response) {
