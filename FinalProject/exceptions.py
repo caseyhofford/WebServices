@@ -9,3 +9,11 @@ class LocationFormatError(Exception):
 class CantGetThereFromHere(Exception):
   def __init__(self,*args,**kwargs):
       Exception.__init__(self,"Item or category must be specified")
+
+class OneBusAwayMismatch(Exception):
+  def __init__(self,*args,**kwargs):
+      Exception.__init__(self,"Item or category must be specified")
+
+class DateTimeError(Exception):
+  def __init__(self,*args,**kwargs):
+      Exception.__init__(self,"Date time formatted incorrectly")

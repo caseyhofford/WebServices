@@ -9,8 +9,10 @@
 
 <h1>BusNotifier</h1>
 
+<p>Input DateTime</p>
 <input type="datetime-local" id="Arrival Time" value=2016-10-18T20:45></input>
 
+<p>Input Destination</p>
 <input type="text" id="deststring" value='47.609712,-122.337795'></input>
 
 <button type="button" onclick="postLocation()">Add Bus to GCal</button>
@@ -107,11 +109,6 @@ function callAuth(response) {
   var arrivalTime = trip['arrivalTime']
   var walk = trip['walk']
   window.location = 'https://accounts.google.com/o/oauth2/auth?client_id=434441611865-vb041elv7otsm7a7ujbgujmhu0e4go32.apps.googleusercontent.com&response_type=code&redirect_uri=http%3A%2F%2F127.0.0.2%3A8000&scope=https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fcalendar&access_type=offline&state='+stopId+'-'+serviceDate+'-'+tripId+'-'+arrivalTime+'-'+walk;
-}
-
-function callbackAuth(response) {
-  var auth = JSON.parse(response);
-  window.location = auth.auth_uri;
 }
 
 </script>

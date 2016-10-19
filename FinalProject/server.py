@@ -29,9 +29,20 @@ def simple_app(environ, start_response):
         headers = [('Content-type', 'text/plain; charset=utf-8')]
         start_response(status, headers)
         return[(bytes(response.encode('utf-8')))]
+    except OneBusAwayMismatch:
+        response = "We're sorry, there was an error finding the destination on OneBusAway"
+        status = '500 Internal Server Error'
+        headers = [('Content-type', 'text/plain; charset=utf-8')]
+        start_response(status, headers)
+        return[(bytes(response.encode('utf-8')))]
+    except ValueError:
+        response = "Please specify data as YYYY-MM-DD'T'HH:MM"
+        status = '400 Bad Request'
+        headers = [('Content-type', 'text/plain; charset=utf-8')]
+        start_response(status, headers)
+        return[(bytes(response.encode('utf-8')))]
     except Exception as E:
-        #print(E)
-        return(bytes(E.encode("utf-8")))
+        return(bytes("An unknown error occured".encode("utf-8")))
 
 httpd = make_server('', 8000, simple_app)
 print("Serving on port 8000...")

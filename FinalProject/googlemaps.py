@@ -5,10 +5,10 @@ import time
 from exceptions import *
 import urllib.parse
 
-def getRoute(lat,lon,destination,arrival_time):
+def getRoute(lat,lon,destination,arrival_time):#finds a transit route between two locations (one as any string and one as lat lon) and returns each leg, walking as an int and transit as a dict
     output = {}
     connection = http.client.HTTPSConnection('maps.googleapis.com')
-    strlat = str(lat)
+    strlat = str(lat)#must be string from URL
     strlon = str(lon)
     strarrival = str(arrival_time).split('.')[0]
     URLdict = {}
@@ -18,23 +18,13 @@ def getRoute(lat,lon,destination,arrival_time):
     URLdict['arrival_time'] = strarrival
     URLdict['key'] = 'AIzaSyBvD87VOpZZZUOl6mo5vxtTWeUCgN9n2AQ'
     qs = urllib.parse.urlencode(URLdict)
-    """if type(destination) is dict:
-        destlat = destination['lat']
-        destlon = destination['lon']
-        strdestlat = str(destlat)
-        strdestlon = str(destlon)
-        #URL = '/maps/api/directions/json?origin='+strlat+"%2C"+strlon+'&destination='+strdestlat+"%2C"+strdestlon+'&mode=transit&arrival_time='+strarrival+'&key=AIzaSyBvD87VOpZZZUOl6mo5vxtTWeUCgN9n2AQ'
-    elif type(destination) is str:
-        #URL = '/maps/api/directions/json?origin='+strlat+"%2C"+strlon+'&destination='+destination+'&mode=transit&arrival_time='+strarrival+'&key=AIzaSyBvD87VOpZZZUOl6mo5vxtTWeUCgN9n2AQ'
-    else:
-        raise LocationFormatError("destination misformatted")"""
     URL = '/maps/api/directions/json?'+qs
     connection.request("GET", URL)
     resp = connection.getresponse().read().decode('utf-8')
     response = json.loads(resp)
-    if response['status'] == "ZERO_RESULTS":
+    if response['status'] == "ZERO_RESULTS":#google maps response when there is no route
         raise CantGetThereFromHere("No transit route found for this request")
-    if response['status'] == "NOT_FOUND":
+    if response['status'] == "NOT_FOUND":#googles response when a location is incorrect
         raise LocationFormatError("Destination was not found")
     print("Google Maps Status: "+response['status'])
     leavetime = response['routes'][0]['legs'][0]['departure_time']['value']
